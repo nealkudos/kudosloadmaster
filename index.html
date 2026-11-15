@@ -1,0 +1,1255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LOADMASTER</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap">
+<style>
+
+  :root {
+    color-scheme: dark;
+    --bg: #0d0f12;
+    --panel: #14171c;
+    --panel2: #181c23;
+    --border: #1e2430;
+    --accent: #f5a623;
+    --green: #3ecf8e;
+    --red: #e05c5c;
+    --text: #e8eaf0;
+    --muted: #6a738a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    height: 100%; overflow: hidden;
+  }
+  html { height: 100%; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 24px; border-bottom: 1px solid var(--border); background: var(--panel);
+    height: 54px;
+  }
+  .logo { font-family: 'Bebas Neue', cursive; font-size: 1.8rem; letter-spacing: 3px; color: var(--accent); }
+  .logo span { color: var(--text); }
+  .header-meta { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--muted); text-align: right; line-height: 1.5; }
+  #storage-warn.bad { color: var(--red); }
+
+  .app { display: grid; grid-template-columns: 350px 1fr; height: calc(100% - 54px); }
+
+  /* ── SIDEBAR ── */
+  .sidebar { background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
+  .tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .tab {
+    flex: 1; padding: 12px; background: none; border: none; color: var(--muted);
+    font-family: 'Bebas Neue', cursive; font-size: 0.95rem; letter-spacing: 1px; cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-body { flex: 1; overflow-y: auto; min-height: 0; padding: 14px; }
+  .tab-body::-webkit-scrollbar { width: 5px; }
+  .tab-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .hidden { display: none !important; }
+
+  .section-title { font-family: 'Bebas Neue', cursive; font-size: 0.95rem; letter-spacing: 2px; color: var(--accent); margin: 4px 0 10px; }
+  label.lbl { display: block; font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+  input[type=text], input[type=number], input[type=password], select {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: 7px 9px; font-family: 'DM Mono', monospace; font-size: 0.78rem; border-radius: 4px; outline: none;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  select option { background: var(--panel); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; margin: 6px 0 10px; color: var(--text); }
+  .check input { accent-color: var(--accent); }
+
+  .btn {
+    background: var(--accent); color: #000; border: none; padding: 9px 12px;
+    font-family: 'Bebas Neue', cursive; font-size: 0.95rem; letter-spacing: 2px; border-radius: 4px; cursor: pointer;
+  }
+  .btn:hover { filter: brightness(1.12); }
+  .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 1px; padding: 7px 10px; text-transform: uppercase; }
+  .btn.ghost:hover { border-color: var(--accent); }
+  .btn.danger { background: transparent; color: var(--red); border: 1px solid var(--red); font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 1px; padding: 7px 10px; text-transform: uppercase; }
+  .btn.danger:hover { background: var(--red); color: #fff; }
+  .btn.green { background: var(--green); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .form-card { background: var(--panel2); border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 14px; }
+
+  .cat-head { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin: 14px 0 6px; }
+  .case-row {
+    display: flex; align-items: center; gap: 9px; background: var(--bg); border: 1px solid var(--border);
+    border-left-width: 3px; border-radius: 5px; padding: 8px 10px; margin-bottom: 6px;
+  }
+  .case-row .info { flex: 1; min-width: 0; }
+  .case-row .nm { font-size: 0.82rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .case-row .dm { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); margin-top: 2px; }
+  .icon-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 4px; width: 26px; height: 26px; cursor: pointer; font-size: 0.8rem; flex-shrink: 0; }
+  .icon-btn:hover { color: var(--text); border-color: var(--accent); }
+  .icon-btn.add { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+  .qty-in { width: 44px !important; padding: 4px 4px !important; text-align: center; flex-shrink: 0; }
+
+  .load-row { cursor: grab; touch-action: none; user-select: none; }
+  .load-row:hover { border-color: var(--accent); }
+  .load-row .cnt { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--accent); flex-shrink: 0; }
+  .load-row.done { opacity: 0.45; cursor: default; }
+  .empty { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); text-align: center; padding: 18px 8px; line-height: 1.6; }
+
+  /* ── MAIN ── */
+  .main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .truck-bar { display: flex; gap: 10px; align-items: flex-end; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .truck-bar .f { width: 96px; }
+  .truck-bar .f.wide { width: 250px; }
+  .stats { display: flex; background: var(--panel); border-bottom: 1px solid var(--border); }
+  .stat { flex: 1; padding: 9px 12px; border-right: 1px solid var(--border); text-align: center; }
+  .stat:last-child { border-right: none; }
+  .stat .k { font-family: 'DM Mono', monospace; font-size: 0.56rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .stat .v { font-family: 'Bebas Neue', cursive; font-size: 1.25rem; letter-spacing: 1px; }
+  .good { color: var(--green); } .warn { color: var(--accent); } .bad { color: var(--red); }
+
+  .work { flex: 1; overflow-y: auto; padding: 16px 20px; min-height: 0;
+    background: radial-gradient(ellipse at 20% 30%, rgba(245,166,35,0.03) 0%, transparent 55%), var(--bg); }
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .view-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin: 10px 0 5px; }
+  #cwrap { width: 100%; }
+  canvas { display: block; border: 2px solid var(--border); border-radius: 3px; background: #1a1f2b; }
+  #top-canvas { touch-action: none; cursor: default; }
+
+  .sel-panel { margin-top: 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-family: 'DM Mono', monospace; font-size: 0.72rem; min-height: 48px; }
+  .sel-panel .nm { font-weight: 500; font-size: 0.8rem; }
+  .hint { color: var(--muted); }
+
+  table.mf { width: 100%; border-collapse: collapse; font-family: 'DM Mono', monospace; font-size: 0.68rem; margin-top: 8px; }
+  table.mf th { color: var(--muted); text-transform: uppercase; letter-spacing: 1px; text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--border); font-weight: 400; }
+  table.mf td { padding: 5px 10px 5px 0; border-bottom: 1px solid rgba(30,36,48,0.6); }
+  table.mf tr.sel td { background: rgba(245,166,35,0.07); }
+  table.mf tr { cursor: pointer; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.6rem; }
+  .b-loaded { background: rgba(62,207,142,0.15); color: var(--green); }
+  .b-pending { background: rgba(245,166,35,0.15); color: var(--accent); }
+
+  #toast { position: fixed; top: 66px; left: 50%; transform: translateX(-50%); background: var(--red); color: #fff; padding: 9px 18px; border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 0.75rem; z-index: 9999; display: none; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+  #toast.ok { background: var(--green); color: #000; }
+  #ghost { position: fixed; pointer-events: none; z-index: 9998; padding: 6px 10px; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 0.72rem; color: #fff; display: none; box-shadow: 0 4px 20px rgba(0,0,0,0.5); white-space: nowrap; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.62); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 16px; }
+  .modal-box { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 20px; max-width: 380px; width: 100%; display: flex; flex-direction: column; gap: 16px; font-size: 0.9rem; line-height: 1.5; }
+
+  @media (max-width: 820px) {
+    html, body { height: auto; }
+    body { overflow: auto; }
+    .app { grid-template-columns: 1fr; height: auto; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 75vh; }
+    .work { overflow: visible; }
+    .stats { flex-wrap: wrap; }
+    .stat { flex: 1 1 33%; }
+    header { padding: 10px 16px; }
+    .truck-bar .f.wide { width: 100%; }
+  }
+  .rms-job { display: flex; align-items: center; gap: 9px; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 8px 10px; margin-bottom: 6px; }
+  .rms-job .info { flex: 1; min-width: 0; }
+  .rms-row { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 6px 9px; margin-bottom: 5px; }
+  .rms-row input[type=checkbox] { accent-color: var(--accent); flex-shrink: 0; }
+  .rms-row .info { flex: 1; min-width: 0; }
+  .rms-row select { width: 150px; flex-shrink: 0; padding: 4px 6px; }
+  details.rms-more summary { cursor: pointer; font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 12px 0 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">LOAD<span>MASTER</span></div>
+  <div class="header-meta">
+    TRUCK LOAD PLANNER v3 · CASE LIBRARY · ALL SIZES IN MM / KG<br>
+    <span id="storage-warn"></span>
+  </div>
+</header>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="tabs">
+      <button class="tab active" id="tab-lib" onclick="showTab('lib')">Cases</button>
+      <button class="tab" id="tab-load" onclick="showTab('load')">Load List <span id="load-count" style="color:var(--accent)"></span></button>
+      <button class="tab" id="tab-fleet" onclick="showTab('fleet')">Fleet</button>
+      <button class="tab" id="tab-rms" onclick="showTab('rms')">RMS</button>
+    </div>
+
+    <!-- LIBRARY TAB -->
+    <div class="tab-body" id="body-lib">
+      <div class="form-card">
+        <div class="section-title" id="form-title">+ New Case</div>
+        <div class="row2">
+          <div><label class="lbl">Name</label><input type="text" id="lib-name" placeholder="e.g. Large Roadtrunk"></div>
+          <div><label class="lbl">Type</label>
+            <select id="lib-cat"><option>Flight case</option><option>Set panel</option><option>Other</option></select>
+          </div>
+        </div>
+        <div class="row3">
+          <div><label class="lbl">Length mm</label><input type="number" id="lib-l" min="1" step="1"></div>
+          <div><label class="lbl">Width mm</label><input type="number" id="lib-w" min="1" step="1"></div>
+          <div><label class="lbl">Height mm</label><input type="number" id="lib-h" min="1" step="1"></div>
+        </div>
+        <div class="row2">
+          <div><label class="lbl">Weight kg (optional)</label><input type="number" id="lib-kg" min="0" step="0.1"></div>
+          <div style="display:flex;align-items:flex-end"><label class="check" style="margin:0 0 8px"><input type="checkbox" id="lib-stack" checked> Can be stacked on</label></div>
+        </div>
+        <div style="margin-bottom:10px"><label class="lbl">Current RMS item names (optional, comma separated)</label><input type="text" id="lib-rms" placeholder="names used on kit lists, if different"></div>
+        <div class="btn-row">
+          <button class="btn" id="lib-save" onclick="saveCase()">SAVE TO LIBRARY</button>
+          <button class="btn ghost hidden" id="lib-cancel" onclick="cancelEdit()">Cancel</button>
+        </div>
+      </div>
+
+      <input type="text" id="lib-search" placeholder="Search library…" oninput="renderLibrary()" style="margin-bottom:4px">
+      <div id="lib-list"></div>
+
+      <div class="cat-head" style="margin-top:20px">Backup</div>
+      <div class="btn-row">
+        <button class="btn ghost" onclick="exportLibrary()">Export library</button>
+        <button class="btn ghost" onclick="document.getElementById('imp-file').click()">Import library</button>
+        <input type="file" id="imp-file" accept=".json" class="hidden" onchange="importLibrary(event)">
+      </div>
+      <div class="hint" style="font-family:'DM Mono',monospace;font-size:0.6rem;margin-top:8px;line-height:1.5">
+        The library is saved in this browser automatically. Export a backup now and then — it's also how you move it to another computer.
+      </div>
+    </div>
+
+    <!-- LOAD LIST TAB -->
+    <div class="tab-body hidden" id="body-load">
+      <div class="hint" style="font-family:'DM Mono',monospace;font-size:0.65rem;line-height:1.6;margin-bottom:10px">
+        Drag a row onto the floor plan, or use AUTO-LOAD. Add cases from the library with the + button.
+      </div>
+      <div id="load-list"></div>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn danger" onclick="clearLoadList()">Clear load list</button>
+      </div>
+    </div>
+
+    <!-- FLEET TAB -->
+    <div class="tab-body hidden" id="body-fleet">
+      <div class="form-card">
+        <div class="section-title" id="fleet-form-title">+ New Truck</div>
+        <div style="margin-bottom:8px">
+          <label class="lbl">Transport company</label>
+          <input type="text" id="fl-company" list="company-list" placeholder="e.g. company name">
+          <datalist id="company-list"></datalist>
+        </div>
+        <div class="row2">
+          <div><label class="lbl">Reg</label><input type="text" id="fl-reg" placeholder="AB12 CDE"></div>
+          <div><label class="lbl">Name (if no reg yet)</label><input type="text" id="fl-name" placeholder="e.g. Luton 1"></div>
+        </div>
+        <div class="row3">
+          <div><label class="lbl">Int. length mm</label><input type="number" id="fl-l" min="1"></div>
+          <div><label class="lbl">Int. width mm</label><input type="number" id="fl-w" min="1"></div>
+          <div><label class="lbl">Int. height mm</label><input type="number" id="fl-h" min="1"></div>
+        </div>
+        <div style="margin-bottom:10px"><label class="lbl">Max payload kg</label><input type="number" id="fl-kg" min="0"></div>
+        <div class="btn-row">
+          <button class="btn" id="fl-save" onclick="saveTruck()">SAVE TRUCK</button>
+          <button class="btn ghost hidden" id="fl-cancel" onclick="cancelTruckEdit()">Cancel</button>
+        </div>
+        <div class="hint" style="font-family:'DM Mono',monospace;font-size:0.6rem;margin-top:8px;line-height:1.5">
+          Give a reg, a name, or both. With both, the name shows first and the reg in brackets. Add the reg later by editing the truck.
+        </div>
+      </div>
+      <input type="text" id="fleet-search" placeholder="Search fleet…" oninput="renderFleet()" style="margin-bottom:4px">
+      <div id="fleet-list"></div>
+    </div>
+
+    <!-- CURRENT RMS TAB -->
+    <div class="tab-body hidden" id="body-rms">
+      <div class="form-card">
+        <div class="section-title">Current RMS job</div>
+        <div style="margin-bottom:8px"><label class="lbl">Passcode</label><input type="password" id="rms-pass" autocomplete="current-password"></div>
+        <div style="margin-bottom:10px"><label class="lbl">Job name, or job ID</label><input type="text" id="rms-q" placeholder="e.g. Raffles, or 4521" onkeydown="if(event.key==='Enter')rmsSearch()"></div>
+        <button class="btn" onclick="rmsSearch()">FIND JOBS</button>
+        <div class="hint" style="font-family:'DM Mono',monospace;font-size:0.6rem;margin-top:8px;line-height:1.5">
+          Leave the box empty to list recent jobs. Cable trunks and anything not prepped yet: add them from the Cases tab.
+        </div>
+      </div>
+      <div id="rms-jobs"></div>
+      <div id="rms-items"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="truck-bar">
+      <div class="f wide"><label class="lbl">Vehicle</label>
+        <select id="t-preset" onchange="applyPreset()"></select>
+      </div>
+      <div class="f"><label class="lbl">Length mm</label><input type="number" id="t-l" onchange="truckChanged()"></div>
+      <div class="f"><label class="lbl">Width mm</label><input type="number" id="t-w" onchange="truckChanged()"></div>
+      <div class="f"><label class="lbl">Height mm</label><input type="number" id="t-h" onchange="truckChanged()"></div>
+      <div class="f"><label class="lbl">Max payload kg</label><input type="number" id="t-kg" onchange="truckChanged()"></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="k">Floor Used</div><div class="v good" id="s-floor">0%</div></div>
+      <div class="stat"><div class="k">Volume Used</div><div class="v good" id="s-vol">0%</div></div>
+      <div class="stat"><div class="k">Weight</div><div class="v good" id="s-kg">0 kg</div></div>
+      <div class="stat"><div class="k">Length Used</div><div class="v" id="s-len">0 mm</div></div>
+      <div class="stat"><div class="k">Loaded</div><div class="v" id="s-cnt">0 / 0</div></div>
+    </div>
+
+    <div class="work" id="work">
+      <div class="toolbar">
+        <button class="btn green" onclick="autoLoad()">⚡ AUTO-LOAD</button>
+        <button class="btn ghost" onclick="unloadAll()">Unload all</button>
+        <button class="btn ghost" onclick="exportCSV()">Export manifest CSV</button>
+        <span class="hint" style="font-family:'DM Mono',monospace;font-size:0.62rem">Front of truck is on the left · drag onto another stackable case to stack</span>
+      </div>
+
+      <div id="cwrap">
+        <div class="view-label" id="top-label">Top view — floor plan</div>
+        <canvas id="top-canvas"></canvas>
+        <div class="view-label" id="side-label">Side view — height</div>
+        <canvas id="side-canvas"></canvas>
+      </div>
+
+      <div class="sel-panel" id="sel-panel"></div>
+
+      <div class="view-label" style="margin-top:18px">Load manifest</div>
+      <div style="overflow-x:auto"><table class="mf">
+        <thead><tr><th>Item</th><th>L × W × H mm</th><th>Weight</th><th>Position x, y, z mm</th><th>Status</th></tr></thead>
+        <tbody id="mf-body"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<div id="confirm" class="modal hidden">
+  <div class="modal-box">
+    <div id="confirm-msg"></div>
+    <div class="btn-row"><button class="btn danger" id="confirm-yes">Yes, remove</button><button class="btn ghost" id="confirm-no">Cancel</button></div>
+  </div>
+</div>
+<div id="toast"></div>
+<div id="ghost"></div>
+
+<script>
+// ═══════════════════ CONSTANTS & STATE ═══════════════════
+const LS_LIB = 'loadmaster.library.v1';
+const LS_PLAN = 'loadmaster.plan.v1';
+const LS_FLEET = 'loadmaster.fleet.v1';
+const PALETTE = ['#f5a623','#3ecf8e','#5b8dee','#e05c5c','#9b6cf5','#4cc9f0','#f72585','#b5e48c','#ffb703','#52b788','#a8dadc','#ff6b6b','#ffd166','#06d6a0','#118ab2'];
+const CATS = ['Flight case', 'Set panel', 'Other'];
+
+// Typical internal sizes — edit to match your actual vehicles.
+const PRESETS = {
+  artic:  { n: '13.6m artic trailer', l: 13600, w: 2450, h: 2700, kg: 24000 },
+  rigid18:{ n: '18t rigid',           l: 7300,  w: 2450, h: 2500, kg: 9000 },
+  box75:  { n: '7.5t box van',        l: 6100,  w: 2400, h: 2300, kg: 2500 },
+  luton:  { n: 'Luton van',           l: 4200,  w: 2050, h: 2200, kg: 1000 },
+  custom: { n: 'Custom',              l: 6000,  w: 2400, h: 2400, kg: 3000 }
+};
+
+const SEED_LIBRARY = [
+  { id: 'c1', name: 'Large Roadtrunk',  cat: 'Flight case', l: 1204, w: 604, h: 724, kg: 0, stack: true, color: PALETTE[0] },
+  { id: 'c2', name: 'Medium Roadtrunk', cat: 'Flight case', l: 904,  w: 604, h: 724, kg: 0, stack: true, color: PALETTE[1] },
+  { id: 'c3', name: 'Small Roadtrunk',  cat: 'Flight case', l: 604,  w: 604, h: 724, kg: 0, stack: true, color: PALETTE[2] }
+];
+
+const SEED_FLEET = [
+  { id: 'etl-45box', company: 'ETL Logistics', reg: '', name: '45ft box trailer', l: 13260, w: 2480, h: 2715, kg: 23000 },
+  { id: 'etl-45curtain', company: 'ETL Logistics', reg: '', name: '45ft curtain side trailer', l: 13260, w: 2480, h: 2715, kg: 24800 },
+  { id: 'etl-30box', company: 'ETL Logistics', reg: '', name: '30ft box trailer', l: 8750, w: 2480, h: 2715, kg: 15000 },
+  { id: 'etl-rigidbox', company: 'ETL Logistics', reg: '', name: 'Rigid box truck', l: 7700, w: 2480, h: 2560, kg: 7500 },
+  { id: 'etl-rigidcurtain', company: 'ETL Logistics', reg: '', name: 'Rigid curtain side truck', l: 7700, w: 2480, h: 2560, kg: 7500 },
+  { id: 'etl-compact', company: 'ETL Logistics', reg: '', name: 'Compact rigid truck', l: 5250, w: 2480, h: 2100, kg: 2000 },
+  { id: 'etl-luton', company: 'ETL Logistics', reg: '', name: 'Luton van', l: 4100, w: 2040, h: 2175, kg: 850 }
+];
+let storageOK = true;
+let library = [];
+let fleet = [];               // {id, company, reg, name, l, w, h, kg}
+let editingTruckId = null;
+let loadList = [];            // instances: {uid, caseId, name, color, l, w, h, kg, stack, placed, x, y, z}
+let truck = { sel: 'preset:artic', l: 13600, w: 2450, h: 2700, kg: 24000 };   // sel: 'fleet:<id>' | 'preset:<key>' | 'custom'
+let selectedUid = null;
+let editingId = null;
+let uidCounter = 0;
+let scale = 0.07;
+let drag = null;              // active drag state
+
+// ═══════════════════ STORAGE ═══════════════════
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { storageOK = false; return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { storageOK = false; } }
+function savePlan() { lsSet(LS_PLAN, { truck, loadList, uidCounter }); }
+
+// Shared storage: the case library and fleet live in the artifact's database,
+// so every device that opens this link sees the same data. The current load plan
+// stays in this browser only. Without the database, everything falls back to this browser.
+let db = null, libLoaded = false, fleetLoaded = false;
+const writeChain = {};
+function setStatus(msg, bad) { const e = document.getElementById('storage-warn'); e.textContent = msg; e.className = bad ? 'bad' : ''; }
+function writeDoc(path, items) {
+  writeChain[path] = (writeChain[path] || Promise.resolve())
+    .then(() => db.doc(path).set({ items }))
+    .catch(e => toast('Could not save that change (' + ((e && e.code) || 'error') + ')'));
+}
+function guard(kind) {
+  if (!db) return true;
+  if ((kind === 'lib' && libLoaded) || (kind === 'fleet' && fleetLoaded)) return true;
+  toast('Still loading your saved data. Try again in a moment.');
+  return false;
+}
+function saveLibrary() { if (db) writeDoc('loadmaster/library', library); else lsSet(LS_LIB, library); }
+function saveFleet() { if (db) writeDoc('loadmaster/fleet', fleet); else lsSet(LS_FLEET, fleet); }
+function cloneItems(items) { return Array.isArray(items) ? items.map(x => ({ ...x })) : []; }
+function subscribeData() {
+  const timer = setTimeout(() => setStatus("Saved data can't be reached yet. Changes may not save.", true), 10000);
+  const done = () => { clearTimeout(timer); setStatus('', false); };
+  const err = e => { clearTimeout(timer); setStatus('Saved data unavailable (' + ((e && e.code) || 'error') + ')', true); };
+  db.doc('loadmaster/library').onSnapshot(snap => {
+    library = cloneItems(snap.exists ? snap.data().items : null);
+    if (!snap.metadata.fromCache) { libLoaded = true; done(); }
+    renderLibrary();
+  }, err);
+  db.doc('loadmaster/fleet').onSnapshot(snap => {
+    fleet = cloneItems(snap.exists ? snap.data().items : null);
+    if (!snap.metadata.fromCache) { fleetLoaded = true; done(); }
+    buildTruckSelect(); renderFleet();
+  }, err);
+}
+
+// ═══════════════════ HELPERS ═══════════════════
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = n => Math.round(n).toLocaleString('en-GB');
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function askConfirm(msg, onYes) {
+  document.getElementById('confirm-msg').textContent = msg;
+  const box = document.getElementById('confirm'); box.classList.remove('hidden');
+  const yes = document.getElementById('confirm-yes'), no = document.getElementById('confirm-no');
+  const close = () => { box.classList.add('hidden'); yes.onclick = null; no.onclick = null; };
+  yes.onclick = () => { close(); onYes(); };
+  no.onclick = close;
+}
+async function saveFile(filename, data) {
+  let dl = null;
+  try { dl = (window.claude && window.claude.use) ? await window.claude.use('downloads') : null; } catch (e) { dl = null; }
+  if (dl) {
+    try { await dl.save({ filename, data }); toast('Saved ' + filename, true); }
+    catch (e) { if (!e || e.code !== 'declined') toast('Could not save the file'); }
+    return;
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data]));
+  a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+}
+function toast(msg, ok) {
+  const t = $('toast'); t.textContent = msg; t.className = ok ? 'ok' : ''; t.style.display = 'block';
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.style.display = 'none', 2600);
+}
+function placed() { return loadList.filter(i => i.placed); }
+function overlap(a, b) {
+  return a.x < b.x + b.l - 0.5 && a.x + a.l > b.x + 0.5 && a.y < b.y + b.w - 0.5 && a.y + a.w > b.y + 0.5;
+}
+function showTab(t) {
+  ['lib', 'load', 'fleet', 'rms'].forEach(n => {
+    $('tab-' + n).classList.toggle('active', t === n);
+    $('body-' + n).classList.toggle('hidden', t !== n);
+  });
+}
+
+// ═══════════════════ CASE LIBRARY ═══════════════════
+function renderLibrary() {
+  const q = $('lib-search').value.trim().toLowerCase();
+  const list = $('lib-list');
+  const items = library.filter(c => !q || c.name.toLowerCase().includes(q) || c.cat.toLowerCase().includes(q));
+  if (!library.length) { list.innerHTML = '<div class="empty">Library is empty.<br>Add your first case above.</div>'; return; }
+  if (!items.length) { list.innerHTML = '<div class="empty">No matches.</div>'; return; }
+  let html = '';
+  CATS.forEach(cat => {
+    const group = items.filter(c => c.cat === cat);
+    if (!group.length) return;
+    html += `<div class="cat-head">${cat}s · ${group.length}</div>`;
+    group.forEach(c => {
+      html += `<div class="case-row" style="border-left-color:${c.color}">
+        <div class="info">
+          <div class="nm">${esc(c.name)}</div>
+          <div class="dm">${c.l} × ${c.w} × ${c.h} mm${c.kg ? ' · ' + c.kg + ' kg' : ''}${c.stack ? '' : ' · no stack'}</div>
+        </div>
+        <input type="number" class="qty-in" id="q-${c.id}" value="1" min="1" max="99" title="Quantity">
+        <button class="icon-btn add" title="Add to load list" onclick="addToLoad('${c.id}')">+</button>
+        <button class="icon-btn" title="Edit" onclick="editCase('${c.id}')">✎</button>
+        <button class="icon-btn" title="Delete" onclick="deleteCase('${c.id}')">×</button>
+      </div>`;
+    });
+  });
+  list.innerHTML = html;
+}
+
+function saveCase() {
+  if (!guard('lib')) return;
+  const name = $('lib-name').value.trim();
+  const l = parseFloat($('lib-l').value), w = parseFloat($('lib-w').value), h = parseFloat($('lib-h').value);
+  const kg = parseFloat($('lib-kg').value) || 0;
+  if (!name) return toast('Give the case a name');
+  if (!(l > 0 && w > 0 && h > 0)) return toast('Enter length, width and height in mm');
+  const data = { name, cat: $('lib-cat').value, l, w, h, kg, stack: $('lib-stack').checked, rms: $('lib-rms').value.split(',').map(x => x.trim()).filter(Boolean) };
+  if (editingId) {
+    const c = library.find(x => x.id === editingId);
+    Object.assign(c, data);
+    toast('Case updated', true);
+  } else {
+    library.push({ id: 'c' + Date.now().toString(36) + Math.floor(Math.random() * 1000), color: PALETTE[library.length % PALETTE.length], ...data });
+    toast('Added to library', true);
+  }
+  saveLibrary();
+  cancelEdit();
+  renderLibrary();
+}
+function editCase(id) {
+  const c = library.find(x => x.id === id); if (!c) return;
+  editingId = id;
+  $('lib-name').value = c.name; $('lib-cat').value = c.cat;
+  $('lib-l').value = c.l; $('lib-w').value = c.w; $('lib-h').value = c.h;
+  $('lib-kg').value = c.kg || ''; $('lib-stack').checked = c.stack; $('lib-rms').value = (c.rms || []).join(', ');
+  $('form-title').textContent = '✎ Edit Case';
+  $('lib-save').textContent = 'UPDATE CASE';
+  $('lib-cancel').classList.remove('hidden');
+  $('body-lib').scrollTop = 0;
+}
+function cancelEdit() {
+  editingId = null;
+  ['lib-name','lib-l','lib-w','lib-h','lib-kg','lib-rms'].forEach(i => $(i).value = '');
+  $('lib-stack').checked = true; $('lib-cat').value = 'Flight case';
+  $('form-title').textContent = '+ New Case';
+  $('lib-save').textContent = 'SAVE TO LIBRARY';
+  $('lib-cancel').classList.add('hidden');
+}
+function deleteCase(id) {
+  if (!guard('lib')) return;
+  const c = library.find(x => x.id === id); if (!c) return;
+  askConfirm(`Delete "${c.name}" from the library? Copies already in the load list stay there.`, () => {
+    library = library.filter(x => x.id !== id);
+    saveLibrary(); renderLibrary();
+  });
+}
+function exportLibrary() {
+  saveFile('loadmaster-library.json', JSON.stringify({ app: 'loadmaster', version: 2, library, fleet }, null, 2));
+}
+function importLibrary(ev) {
+  const f = ev.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    if (!guard('lib') || !guard('fleet')) return;
+    try {
+      const data = JSON.parse(r.result);
+      const incoming = Array.isArray(data) ? data : (data.library || []);
+      if (!Array.isArray(incoming)) throw new Error('bad file');
+      let tAdded = 0;
+      (Array.isArray(data.fleet) ? data.fleet : []).forEach(t => {
+        if (!t.company || !(t.reg || t.name) || !(t.l > 0 && t.w > 0 && t.h > 0)) return;
+        const key = x => (x.company + '|' + (x.reg || x.name)).toLowerCase();
+        const clean = { company: String(t.company).trim(), reg: String(t.reg || '').toUpperCase().trim(), name: String(t.name || '').trim(), l: +t.l, w: +t.w, h: +t.h, kg: +t.kg || 0 };
+        const ex = fleet.find(x => key(x) === key(clean));
+        if (ex) Object.assign(ex, clean);
+        else { fleet.push({ id: 't' + Date.now().toString(36) + Math.floor(Math.random() * 100000), ...clean }); tAdded++; }
+      });
+      if (Array.isArray(data.fleet)) { saveFleet(); renderFleet(); buildTruckSelect(); }
+      let added = 0, updated = 0;
+      incoming.forEach(c => {
+        if (!c.name || !(c.l > 0 && c.w > 0 && c.h > 0)) return;
+        const existing = library.find(x => x.name.toLowerCase() === String(c.name).toLowerCase());
+        const clean = { name: c.name, cat: CATS.includes(c.cat) ? c.cat : 'Other', l: +c.l, w: +c.w, h: +c.h, kg: +c.kg || 0, stack: c.stack !== false, ...(Array.isArray(c.rms) ? { rms: c.rms.map(String) } : {}) };
+        if (existing) { Object.assign(existing, clean); updated++; }
+        else { library.push({ id: 'c' + Date.now().toString(36) + Math.floor(Math.random() * 100000), color: PALETTE[library.length % PALETTE.length], ...clean }); added++; }
+      });
+      saveLibrary(); renderLibrary();
+      toast(`Imported: ${added} new cases, ${updated} updated` + (tAdded ? `, ${tAdded} new trucks` : ''), true);
+    } catch (e) { toast('Could not read that file'); }
+    ev.target.value = '';
+  };
+  r.readAsText(f);
+}
+
+// ═══════════════════ LOAD LIST ═══════════════════
+function addToLoad(caseId) {
+  const c = library.find(x => x.id === caseId); if (!c) return;
+  const qEl = $('q-' + caseId);
+  const qty = clamp(parseInt(qEl ? qEl.value : 1) || 1, 1, 99);
+  for (let i = 0; i < qty; i++) {
+    loadList.push({ uid: ++uidCounter, caseId: c.id, name: c.name, color: c.color, l: c.l, w: c.w, h: c.h, kg: c.kg || 0, stack: c.stack, placed: false, x: 0, y: 0, z: 0 });
+  }
+  if (qEl) qEl.value = 1;
+  toast(`Added ${qty} × ${c.name} to load list`, true);
+  refresh();
+}
+function groupedLoad() {
+  const map = new Map();
+  loadList.forEach(i => {
+    const key = i.caseId + '|' + i.name;
+    if (!map.has(key)) map.set(key, { key, caseId: i.caseId, name: i.name, color: i.color, l: i.l, w: i.w, h: i.h, kg: i.kg, items: [] });
+    map.get(key).items.push(i);
+  });
+  return [...map.values()];
+}
+function renderLoadList() {
+  const el = $('load-list');
+  $('load-count').textContent = loadList.length ? `(${loadList.length})` : '';
+  if (!loadList.length) { el.innerHTML = '<div class="empty">Nothing in the load list.<br>Go to Case Library and press + on a case.</div>'; return; }
+  el.innerHTML = groupedLoad().map(g => {
+    const p = g.items.filter(i => i.placed).length, total = g.items.length;
+    const done = p === total;
+    const k = esc(g.key).replace(/'/g, '&#39;');
+    return `<div class="case-row load-row ${done ? 'done' : ''}" style="border-left-color:${g.color}" data-key="${k}" onpointerdown="startListDrag(event, this.dataset.key)">
+      <div class="info"><div class="nm">${esc(g.name)}</div><div class="dm">${g.l} × ${g.w} × ${g.h} mm</div></div>
+      <div class="cnt">${p}/${total}</div>
+      <button class="icon-btn" onpointerdown="event.stopPropagation()" onclick="adjustGroup(this.closest('.load-row').dataset.key, -1)">−</button>
+      <button class="icon-btn" onpointerdown="event.stopPropagation()" onclick="adjustGroup(this.closest('.load-row').dataset.key, 1)">+</button>
+    </div>`;
+  }).join('');
+}
+function adjustGroup(key, delta) {
+  const g = groupedLoad().find(x => x.key === key); if (!g) return;
+  if (delta > 0) {
+    const t = g.items[0];
+    loadList.push({ ...t, uid: ++uidCounter, placed: false, x: 0, y: 0, z: 0, l: g.l, w: g.w, h: g.h });
+  } else {
+    const un = g.items.filter(i => !i.placed);
+    const victim = un.length ? un[un.length - 1] : g.items[g.items.length - 1];
+    loadList = loadList.filter(i => i !== victim);
+    if (selectedUid === victim.uid) selectedUid = null;
+    settle();
+  }
+  refresh();
+}
+function clearLoadList() {
+  const go = () => { loadList = []; selectedUid = null; refresh(); };
+  if (loadList.length) askConfirm('Remove everything from the load list and the truck?', go); else go();
+}
+function unloadAll() { loadList.forEach(i => { i.placed = false; i.z = 0; }); selectedUid = null; refresh(); }
+
+// ═══════════════════ PLACEMENT ENGINE ═══════════════════
+// x along truck length (front = 0), y across width, z up from floor.
+function settle() {
+  const arr = placed().sort((a, b) => a.z - b.z || a.uid - b.uid);
+  const done = [];
+  arr.forEach(it => {
+    let z = 0;
+    done.forEach(d => { if (overlap(it, d)) z = Math.max(z, d.z + d.h); });
+    it.z = z; done.push(it);
+  });
+}
+function snapAxis(val, size, max, edgesStart, edgesEnd) {
+  const thr = Math.min(150, 12 / scale);
+  const cands = [0, max - size];
+  edgesStart.forEach(e => { cands.push(e - size); cands.push(e); });
+  edgesEnd.forEach(e => { cands.push(e); });
+  let best = val, bd = thr;
+  cands.forEach(c => { if (c >= 0 && c <= max - size && Math.abs(c - val) < bd) { bd = Math.abs(c - val); best = c; } });
+  return Math.round(best);
+}
+function evalPlace(inst, x, y) {
+  const others = placed().filter(o => o !== inst);
+  x = clamp(x, 0, Math.max(0, truck.l - inst.l));
+  y = clamp(y, 0, Math.max(0, truck.w - inst.w));
+  if (inst.l > truck.l || inst.w > truck.w) return { ok: false, x, y, z: 0, reason: 'Too big for the truck floor' };
+  x = snapAxis(x, inst.l, truck.l, others.map(o => o.x + o.l), others.map(o => o.x));
+  y = snapAxis(y, inst.w, truck.w, others.map(o => o.y + o.w), others.map(o => o.y));
+  const probe = { x, y, l: inst.l, w: inst.w };
+  let z = 0, reason = null;
+  others.forEach(o => {
+    if (overlap(probe, o)) {
+      if (!o.stack) reason = `Can't stack on ${o.name}`;
+      z = Math.max(z, o.z + o.h);
+    }
+  });
+  if (!reason && z + inst.h > truck.h) reason = 'No headroom — would hit the roof';
+  return { ok: !reason, x, y, z, reason };
+}
+function commitPlace(inst, c) { inst.x = c.x; inst.y = c.y; inst.z = c.z; inst.placed = true; settle(); }
+
+// ═══════════════════ AUTO-LOAD ═══════════════════
+function autoLoad() {
+  const todo = loadList.filter(i => !i.placed).sort((a, b) => b.l * b.w - a.l * a.w || b.h - a.h);
+  if (!todo.length) return toast('Nothing left to load');
+  let kg = placed().reduce((s, i) => s + i.kg, 0);
+  const skipped = { fit: 0, weight: 0 };
+  const left = [];
+
+  // Strip packing across the width, advancing along the length
+  const ex = placed();
+  let curX = ex.length ? Math.max(...ex.map(o => o.x + o.l)) : 0;
+  let curY = 0, stripL = 0;
+
+  todo.forEach(it => {
+    if (truck.kg && kg + it.kg > truck.kg) { skipped.weight++; return; }
+    const opts = [{ l: it.l, w: it.w }, { l: it.w, w: it.l }].filter(o => curY + o.w <= truck.w + 0.5 && o.l <= truck.l);
+    const score = o => stripL === 0 ? o.l : (o.l <= stripL ? stripL - o.l : 100000 + o.l - stripL);
+    let choice = opts.sort((a, b) => score(a) - score(b))[0];
+    if (!choice || (stripL > 0 && curX + Math.max(stripL, choice.l) > truck.l + 0.5 && false)) choice = null;
+    if (!choice) {
+      // new strip
+      const nx = curX + stripL;
+      const alt = [{ l: it.l, w: it.w }, { l: it.w, w: it.l }].filter(o => o.w <= truck.w && nx + o.l <= truck.l + 0.5 && it.h <= truck.h)
+        .sort((a, b) => a.l - b.l)[0];
+      if (!alt) { left.push(it); return; }
+      curX = nx; curY = 0; stripL = 0; choice = alt;
+    }
+    if (curX + choice.l > truck.l + 0.5 || it.h > truck.h) { left.push(it); return; }
+    it.l = choice.l; it.w = choice.w;
+    it.x = curX; it.y = curY; it.z = 0; it.placed = true;
+    curY += choice.w; stripL = Math.max(stripL, choice.l);
+    kg += it.kg;
+  });
+
+  // Second pass: stack leftovers on stackable cases below
+  left.forEach(it => {
+    if (!it.stack && false) return;
+    const bases = placed().filter(b => b.stack);
+    let done = false;
+    for (const b of bases.sort((a, c) => a.z - c.z)) {
+      for (const o of [{ l: it.l, w: it.w }, { l: it.w, w: it.l }]) {
+        if (o.l > b.l + 0.5 || o.w > b.w + 0.5) continue;
+        const probe = { x: b.x, y: b.y, l: o.l, w: o.w };
+        let z = 0, okSup = true;
+        placed().forEach(p => { if (overlap(probe, p)) { if (!p.stack) okSup = false; z = Math.max(z, p.z + p.h); } });
+        if (!okSup || z + it.h > truck.h) continue;
+        if (truck.kg && kg + it.kg > truck.kg) continue;
+        it.l = o.l; it.w = o.w; it.x = b.x; it.y = b.y; it.z = z; it.placed = true; kg += it.kg; done = true; break;
+      }
+      if (done) break;
+    }
+    if (!done) skipped.fit++;
+  });
+  settle();
+  refresh();
+  const msgs = [];
+  if (skipped.fit) msgs.push(`${skipped.fit} didn't fit`);
+  if (skipped.weight) msgs.push(`${skipped.weight} skipped (payload limit)`);
+  msgs.length ? toast('Auto-load done — ' + msgs.join(', ')) : toast('Auto-load complete', true);
+}
+
+// ═══════════════════ SELECTED ITEM ACTIONS ═══════════════════
+function selected() { return loadList.find(i => i.uid === selectedUid) || null; }
+function rotateSel() {
+  const it = selected(); if (!it) return;
+  const old = { l: it.l, w: it.w, x: it.x, y: it.y, z: it.z };
+  it.l = old.w; it.w = old.l;
+  if (it.placed) {
+    const c = evalPlace(it, it.x, it.y);
+    if (!c.ok) { it.l = old.l; it.w = old.w; toast(c.reason); return; }
+    it.x = c.x; it.y = c.y; settle();
+  }
+  refresh();
+}
+function tipSel() {
+  const it = selected(); if (!it) return;
+  const old = { w: it.w, h: it.h };
+  it.w = old.h; it.h = old.w;
+  if (it.placed) {
+    const c = evalPlace(it, it.x, it.y);
+    if (!c.ok) { it.w = old.w; it.h = old.h; toast(c.reason); return; }
+    it.x = c.x; it.y = c.y; settle();
+  }
+  refresh();
+}
+function unloadSel() {
+  const it = selected(); if (!it) return;
+  it.placed = false; it.z = 0; settle(); refresh();
+}
+
+// ═══════════════════ DRAWING ═══════════════════
+const topC = $('top-canvas'), sideC = $('side-canvas');
+function setupCanvas(c, wMM, hMM) {
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = Math.round(wMM * scale), cssH = Math.round(hMM * scale);
+  c.style.width = cssW + 'px'; c.style.height = cssH + 'px';
+  c.width = cssW * dpr; c.height = cssH * dpr;
+  const ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, cssW, cssH };
+}
+function fitScale() {
+  const avail = $('cwrap').clientWidth - 6;
+  scale = clamp(avail / truck.l, 0.01, 0.35);
+}
+function drawGrid(ctx, w, h, cols, rows) {
+  ctx.fillStyle = '#1a1f2b'; ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = 'rgba(255,255,255,0.045)'; ctx.lineWidth = 1;
+  for (let x = 0; x <= cols; x += 500) { ctx.beginPath(); ctx.moveTo(x * scale, 0); ctx.lineTo(x * scale, h); ctx.stroke(); }
+  for (let y = 0; y <= rows; y += 500) { ctx.beginPath(); ctx.moveTo(0, y * scale); ctx.lineTo(w, y * scale); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(245,166,35,0.2)';
+  for (let x = 0; x <= cols; x += 1000) { ctx.beginPath(); ctx.moveTo(x * scale, 0); ctx.lineTo(x * scale, h); ctx.stroke(); }
+  ctx.fillStyle = 'rgba(245,166,35,0.55)'; ctx.font = '9px DM Mono, monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  for (let x = 1000; x < cols; x += 1000) ctx.fillText((x / 1000) + 'm', x * scale + 3, 3);
+  ctx.strokeStyle = 'rgba(245,166,35,0.55)'; ctx.lineWidth = 2; ctx.strokeRect(1, 1, w - 2, h - 2);
+}
+function drawBox(ctx, x, y, w, h, it, opts) {
+  opts = opts || {};
+  const a = opts.alpha != null ? opts.alpha : 0.82;
+  const col = opts.color || it.color;
+  ctx.globalAlpha = a; ctx.fillStyle = col; ctx.fillRect(x, y, w, h); ctx.globalAlpha = 1;
+  ctx.strokeStyle = opts.stroke || col; ctx.lineWidth = opts.lw || 1.5;
+  if (opts.dash) ctx.setLineDash([5, 4]);
+  ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); ctx.setLineDash([]);
+  if (opts.label !== false && w > 26 && h > 13) {
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    ctx.fillStyle = 'rgba(0,0,0,0.78)'; ctx.font = '500 10px DM Mono, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(it.name, x + w / 2, y + h / 2 - (h > 28 ? 6 : 0));
+    if (h > 28 && opts.sub) { ctx.font = '9px DM Mono, monospace'; ctx.fillText(opts.sub, x + w / 2, y + h / 2 + 7); }
+    ctx.restore();
+  }
+}
+function render() {
+  fitScale();
+  // TOP
+  const t = setupCanvas(topC, truck.l, truck.w);
+  drawGrid(t.ctx, t.cssW, t.cssH, truck.l, truck.w);
+  const pl = placed().sort((a, b) => a.z - b.z || a.uid - b.uid);
+  pl.forEach(it => {
+    const isDrag = drag && drag.inst === it;
+    const bad = it.z + it.h > truck.h + 0.5;
+    drawBox(t.ctx, it.x * scale, it.y * scale, it.l * scale, it.w * scale, it, {
+      alpha: isDrag ? 0.25 : 0.82, color: bad ? '#e05c5c' : undefined,
+      stroke: it.uid === selectedUid ? '#fff' : undefined, lw: it.uid === selectedUid ? 2.5 : 1.5,
+      sub: it.z > 0 ? `▲ +${fmt(it.z)}` : `${it.l}×${it.w}`
+    });
+  });
+  if (drag && drag.cand) {
+    const c = drag.cand, i = drag.inst;
+    drawBox(t.ctx, c.x * scale, c.y * scale, i.l * scale, i.w * scale, i, {
+      alpha: 0.4, color: c.ok ? i.color : '#e05c5c', stroke: c.ok ? '#3ecf8e' : '#e05c5c', dash: true, lw: 2,
+      sub: c.ok ? (c.z > 0 ? `▲ +${fmt(c.z)}` : '') : '✕'
+    });
+  }
+  // SIDE
+  const s = setupCanvas(sideC, truck.l, truck.h);
+  drawGrid(s.ctx, s.cssW, s.cssH, truck.l, truck.h);
+  pl.slice().sort((a, b) => b.y - a.y).forEach(it => {
+    const bad = it.z + it.h > truck.h + 0.5;
+    drawBox(s.ctx, it.x * scale, (truck.h - it.z - it.h) * scale, it.l * scale, it.h * scale, it, {
+      alpha: 0.55, color: bad ? '#e05c5c' : undefined,
+      stroke: it.uid === selectedUid ? '#fff' : undefined, lw: it.uid === selectedUid ? 2.5 : 1.2,
+      sub: `${it.h}`
+    });
+  });
+  $('top-label').textContent = `Top view — ${truckName()} · ${fmt(truck.l)} × ${fmt(truck.w)} mm (drag cases to move them)`;
+  $('side-label').textContent = `Side view — ${truckName()} · ${fmt(truck.l)} × ${fmt(truck.h)} mm`;
+  renderStats(); renderSel(); renderManifest();
+}
+
+function renderStats() {
+  const pl = placed();
+  const floorA = pl.filter(i => i.z === 0).reduce((s, i) => s + i.l * i.w, 0);
+  const vol = pl.reduce((s, i) => s + i.l * i.w * i.h, 0);
+  const floorP = floorA / (truck.l * truck.w) * 100, volP = vol / (truck.l * truck.w * truck.h) * 100;
+  const kg = pl.reduce((s, i) => s + i.kg, 0);
+  const kgP = truck.kg ? kg / truck.kg * 100 : 0;
+  const lenUsed = pl.length ? Math.max(...pl.map(i => i.x + i.l)) : 0;
+  const noW = pl.filter(i => !i.kg).length;
+  const set = (id, txt, cls) => { const e = $(id); e.textContent = txt; if (cls) e.className = 'v ' + cls; };
+  set('s-floor', floorP.toFixed(1) + '%', floorP > 95 ? 'bad' : floorP > 80 ? 'warn' : 'good');
+  set('s-vol', volP.toFixed(1) + '%', volP > 95 ? 'bad' : volP > 80 ? 'warn' : 'good');
+  set('s-kg', fmt(kg) + ' kg' + (noW ? ` (${noW} no wt)` : ''), kgP > 100 ? 'bad' : kgP > 85 ? 'warn' : 'good');
+  set('s-len', fmt(lenUsed) + ' mm');
+  set('s-cnt', `${pl.length} / ${loadList.length}`);
+}
+function renderSel() {
+  const it = selected(), el = $('sel-panel');
+  if (!it) { el.innerHTML = '<span class="hint">Click a case on the floor plan to select it. R = rotate · T = tip on its side · Delete = take off truck.</span>'; return; }
+  el.innerHTML = `<span class="nm" style="color:${it.color}">■ ${esc(it.name)}</span>
+    <span>${it.l} × ${it.w} × ${it.h} mm</span>
+    <span>${it.placed ? `at x ${fmt(it.x)} · y ${fmt(it.y)} · z ${fmt(it.z)}` : 'not loaded'}</span>
+    <span class="btn-row" style="margin-left:auto">
+      <button class="btn ghost" onclick="rotateSel()">⟳ Rotate (R)</button>
+      <button class="btn ghost" onclick="tipSel()">⤾ Tip (T)</button>
+      ${it.placed ? '<button class="btn danger" onclick="unloadSel()">Unload</button>' : ''}
+    </span>`;
+}
+function renderManifest() {
+  const tb = $('mf-body');
+  if (!loadList.length) { tb.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No items in the load list</td></tr>'; return; }
+  tb.innerHTML = loadList.map(i => `<tr class="${i.uid === selectedUid ? 'sel' : ''}" onclick="selectedUid=${i.uid};render()">
+    <td><span style="color:${i.color}">■</span> ${esc(i.name)}</td>
+    <td>${i.l} × ${i.w} × ${i.h}</td>
+    <td>${i.kg ? i.kg + ' kg' : '—'}</td>
+    <td>${i.placed ? `${fmt(i.x)}, ${fmt(i.y)}, ${fmt(i.z)}` : '—'}</td>
+    <td><span class="badge ${i.placed ? 'b-loaded' : 'b-pending'}">${i.placed ? 'LOADED' : 'PENDING'}</span></td></tr>`).join('');
+}
+function refresh() { renderLoadList(); render(); savePlan(); }
+
+function exportCSV() {
+  if (!loadList.length) return toast('Nothing to export');
+  const rows = [['Item', 'Length mm', 'Width mm', 'Height mm', 'Weight kg', 'X mm', 'Y mm', 'Z mm', 'Status']];
+  loadList.forEach(i => rows.push([i.name, i.l, i.w, i.h, i.kg || '', i.placed ? i.x : '', i.placed ? i.y : '', i.placed ? i.z : '', i.placed ? 'Loaded' : 'Pending']));
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  saveFile('load-manifest.csv', csv);
+}
+
+// ═══════════════════ FLEET ═══════════════════
+function truckLabel(t) { return t.name && t.reg ? `${t.name} (${t.reg})` : (t.reg || t.name || 'Unnamed'); }
+function truckName() {
+  if (truck.sel.startsWith('fleet:')) { const t = fleet.find(x => 'fleet:' + x.id === truck.sel); if (t) return `${t.company} · ${truckLabel(t)}`; }
+  if (truck.sel.startsWith('preset:')) { const p = PRESETS[truck.sel.slice(7)]; if (p) return p.n; }
+  return 'Custom vehicle';
+}
+function companies() { return [...new Set(fleet.map(t => t.company))].sort((a, b) => a.localeCompare(b)); }
+
+function renderFleet() {
+  $('company-list').innerHTML = companies().map(c => `<option value="${esc(c)}">`).join('');
+  const el = $('fleet-list');
+  if (!fleet.length) { el.innerHTML = '<div class="empty">No trucks yet.<br>Add your first one above.<br>Until then, use the generic sizes in the Vehicle menu.</div>'; return; }
+  const q = $('fleet-search').value.trim().toLowerCase();
+  const match = t => !q || (t.company + ' ' + t.reg + ' ' + t.name).toLowerCase().includes(q);
+  let html = '';
+  companies().forEach(c => {
+    const group = fleet.filter(t => t.company === c && match(t)).sort((a, b) => truckLabel(a).localeCompare(truckLabel(b)));
+    if (!group.length) return;
+    html += `<div class="cat-head">${esc(c)} · ${group.length}</div>`;
+    group.forEach(t => {
+      const active = truck.sel === 'fleet:' + t.id;
+      html += `<div class="case-row" style="border-left-color:${active ? 'var(--green)' : 'var(--accent)'}">
+        <div class="info">
+          <div class="nm">${esc(truckLabel(t))}${t.name && !t.reg ? ' <span style="color:var(--red);font-size:0.62rem">· no reg yet</span>' : ''}</div>
+          <div class="dm">${t.l} × ${t.w} × ${t.h} mm${t.kg ? ' · ' + fmt(t.kg) + ' kg' : ''}</div>
+        </div>
+        <button class="icon-btn add" title="Load this truck" onclick="useTruck('${t.id}')">${active ? '✓' : '→'}</button>
+        <button class="icon-btn" title="Edit" onclick="editTruck('${t.id}')">✎</button>
+        <button class="icon-btn" title="Delete" onclick="deleteTruck('${t.id}')">×</button>
+      </div>`;
+    });
+  });
+  el.innerHTML = html || '<div class="empty">No matches.</div>';
+}
+function saveTruck() {
+  if (!guard('fleet')) return;
+  const company = $('fl-company').value.trim();
+  const reg = $('fl-reg').value.toUpperCase().replace(/\s+/g, ' ').trim();
+  const name = $('fl-name').value.trim();
+  const l = parseFloat($('fl-l').value), w = parseFloat($('fl-w').value), h = parseFloat($('fl-h').value);
+  const kg = parseFloat($('fl-kg').value) || 0;
+  if (!company) return toast('Enter the transport company');
+  if (!reg && !name) return toast('Enter a reg, or a name if there is no reg yet');
+  if (!(l > 0 && w > 0 && h > 0)) return toast('Enter the internal length, width and height in mm');
+  if (reg && fleet.some(t => t.reg === reg && t.id !== editingTruckId)) return toast(`${reg} is already in the fleet`);
+  const data = { company, reg, name, l, w, h, kg };
+  let id = editingTruckId;
+  if (id) Object.assign(fleet.find(t => t.id === id), data);
+  else { id = 't' + Date.now().toString(36) + Math.floor(Math.random() * 1000); fleet.push({ id, ...data }); }
+  saveFleet();
+  const wasEditing = !!editingTruckId;
+  cancelTruckEdit();
+  buildTruckSelect();
+  if (truck.sel === 'fleet:' + id) useTruck(id); else renderFleet();
+  toast(wasEditing ? 'Truck updated' : 'Truck added', true);
+}
+function editTruck(id) {
+  const t = fleet.find(x => x.id === id); if (!t) return;
+  editingTruckId = id;
+  $('fl-company').value = t.company; $('fl-reg').value = t.reg; $('fl-name').value = t.name;
+  $('fl-l').value = t.l; $('fl-w').value = t.w; $('fl-h').value = t.h; $('fl-kg').value = t.kg || '';
+  $('fleet-form-title').textContent = '✎ Edit Truck';
+  $('fl-save').textContent = 'UPDATE TRUCK';
+  $('fl-cancel').classList.remove('hidden');
+  $('body-fleet').scrollTop = 0;
+}
+function cancelTruckEdit() {
+  editingTruckId = null;
+  ['fl-company', 'fl-reg', 'fl-name', 'fl-l', 'fl-w', 'fl-h', 'fl-kg'].forEach(i => $(i).value = '');
+  $('fleet-form-title').textContent = '+ New Truck';
+  $('fl-save').textContent = 'SAVE TRUCK';
+  $('fl-cancel').classList.add('hidden');
+}
+function deleteTruck(id) {
+  if (!guard('fleet')) return;
+  const t = fleet.find(x => x.id === id); if (!t) return;
+  askConfirm(`Delete ${truckLabel(t)} (${t.company}) from the fleet?`, () => {
+    fleet = fleet.filter(x => x.id !== id);
+    if (truck.sel === 'fleet:' + id) truck.sel = 'custom';
+    saveFleet(); buildTruckSelect(); syncTruckInputs(); renderFleet(); render(); savePlan();
+  });
+}
+function useTruck(id) {
+  const t = fleet.find(x => x.id === id); if (!t) return;
+  truck = { sel: 'fleet:' + id, l: t.l, w: t.w, h: t.h, kg: t.kg };
+  buildTruckSelect(); syncTruckInputs(); truckChanged(true); renderFleet();
+}
+
+// ═══════════════════ TRUCK CONFIG ═══════════════════
+function initPresets() { buildTruckSelect(); }
+function buildTruckSelect() {
+  let html = '';
+  companies().forEach(c => {
+    html += `<optgroup label="${esc(c)}">` + fleet.filter(t => t.company === c)
+      .sort((a, b) => truckLabel(a).localeCompare(truckLabel(b)))
+      .map(t => `<option value="fleet:${t.id}">${esc(truckLabel(t))}</option>`).join('') + '</optgroup>';
+  });
+  html += '<optgroup label="Generic (typical sizes)">' + Object.entries(PRESETS).filter(([k]) => k !== 'custom')
+    .map(([k, p]) => `<option value="preset:${k}">${esc(p.n)}</option>`).join('') + '</optgroup>';
+  html += '<option value="custom">Custom size</option>';
+  if (truck.sel.startsWith('fleet:') && !fleetLoaded) html = `<option value="${truck.sel}">Loading vehicle…</option>` + html;
+  const sel = $('t-preset');
+  sel.innerHTML = html;
+  sel.value = truck.sel;
+  if (sel.value !== truck.sel && (fleetLoaded || !truck.sel.startsWith('fleet:'))) { truck.sel = 'custom'; sel.value = 'custom'; }
+}
+function syncTruckInputs() {
+  $('t-preset').value = truck.sel; $('t-l').value = truck.l; $('t-w').value = truck.w; $('t-h').value = truck.h; $('t-kg').value = truck.kg;
+}
+function applyPreset() {
+  const v = $('t-preset').value;
+  if (v.startsWith('fleet:')) {
+    const t = fleet.find(x => 'fleet:' + x.id === v);
+    if (t) truck = { sel: v, l: t.l, w: t.w, h: t.h, kg: t.kg };
+  } else if (v.startsWith('preset:')) {
+    const p = PRESETS[v.slice(7)];
+    if (p) truck = { sel: v, l: p.l, w: p.w, h: p.h, kg: p.kg };
+  } else {
+    truck.sel = 'custom';
+  }
+  syncTruckInputs(); truckChanged(true);
+}
+function truckChanged(fromPreset) {
+  if (!fromPreset) {
+    truck.sel = 'custom'; $('t-preset').value = 'custom';
+    truck.l = +$('t-l').value || truck.l; truck.w = +$('t-w').value || truck.w;
+    truck.h = +$('t-h').value || truck.h; truck.kg = +$('t-kg').value || 0;
+  }
+  // Anything that no longer fits goes back to the load list
+  let bumped = 0;
+  placed().forEach(i => {
+    if (i.x + i.l > truck.l + 0.5 || i.y + i.w > truck.w + 0.5) { i.placed = false; i.z = 0; bumped++; }
+  });
+  settle();
+  if (bumped) toast(`${bumped} item(s) no longer fit and were unloaded`);
+  refresh();
+}
+
+// ═══════════════════ DRAGGING ═══════════════════
+const ghost = $('ghost');
+function canvasPos(e) {
+  const r = topC.getBoundingClientRect();
+  return { mx: (e.clientX - r.left) / scale, my: (e.clientY - r.top) / scale, inside: e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom };
+}
+function startListDrag(e, key) {
+  if (e.button !== undefined && e.button !== 0) return;
+  const g = groupedLoad().find(x => x.key === key); if (!g) return;
+  const inst = g.items.find(i => !i.placed);
+  if (!inst) return toast('All of these are already loaded');
+  drag = { inst, fromList: true, offX: inst.l / 2, offY: inst.w / 2, cand: null };
+  ghost.style.background = inst.color + 'dd'; ghost.textContent = `${inst.name} (${inst.l}×${inst.w})`; ghost.style.display = 'block';
+  moveGhost(e);
+  window.addEventListener('pointermove', onDragMove); window.addEventListener('pointerup', onDragEnd);
+  e.preventDefault();
+}
+function moveGhost(e) { ghost.style.left = (e.clientX + 12) + 'px'; ghost.style.top = (e.clientY - 14) + 'px'; }
+topC.addEventListener('pointerdown', e => {
+  const p = canvasPos(e);
+  const hit = placed().sort((a, b) => b.z - a.z || b.uid - a.uid).find(i => p.mx >= i.x && p.mx <= i.x + i.l && p.my >= i.y && p.my <= i.y + i.w);
+  if (!hit) { selectedUid = null; render(); return; }
+  selectedUid = hit.uid;
+  drag = { inst: hit, fromList: false, offX: p.mx - hit.x, offY: p.my - hit.y, cand: null };
+  topC.style.cursor = 'grabbing';
+  window.addEventListener('pointermove', onDragMove); window.addEventListener('pointerup', onDragEnd);
+  render(); e.preventDefault();
+});
+function onDragMove(e) {
+  if (!drag) return;
+  if (drag.fromList) moveGhost(e);
+  const p = canvasPos(e);
+  if (p.inside) {
+    drag.cand = evalPlace(drag.inst, p.mx - drag.offX, p.my - drag.offY);
+    if (drag.fromList) ghost.style.display = 'none';
+  } else {
+    drag.cand = null;
+    if (drag.fromList) ghost.style.display = 'block';
+  }
+  render();
+}
+function onDragEnd(e) {
+  window.removeEventListener('pointermove', onDragMove); window.removeEventListener('pointerup', onDragEnd);
+  ghost.style.display = 'none'; topC.style.cursor = 'default';
+  if (!drag) return;
+  const d = drag; drag = null;
+  const p = canvasPos(e);
+  if (p.inside) {
+    const c = evalPlace(d.inst, p.mx - d.offX, p.my - d.offY);
+    if (c.ok) { commitPlace(d.inst, c); selectedUid = d.inst.uid; if (truck.kg) { const kg = placed().reduce((s, i) => s + i.kg, 0); if (kg > truck.kg) toast(`⚠ Overweight: ${fmt(kg)} / ${fmt(truck.kg)} kg`); } }
+    else toast(c.reason);
+  } else if (!d.fromList && d.inst.placed) {
+    // dropped outside the canvas → take it off the truck
+    d.inst.placed = false; d.inst.z = 0; settle();
+  }
+  refresh();
+}
+topC.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  const p = canvasPos(e);
+  const hit = placed().sort((a, b) => b.z - a.z).find(i => p.mx >= i.x && p.mx <= i.x + i.l && p.my >= i.y && p.my <= i.y + i.w);
+  if (hit) { hit.placed = false; hit.z = 0; settle(); if (selectedUid === hit.uid) selectedUid = hit.uid; refresh(); }
+});
+window.addEventListener('keydown', e => {
+  if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  const k = e.key.toLowerCase();
+  if (k === 'r') rotateSel();
+  else if (k === 't') tipSel();
+  else if (k === 'delete' || k === 'backspace') unloadSel();
+});
+window.addEventListener('resize', render);
+
+// ═══════════════════ CURRENT RMS ═══════════════════
+const LS_RMS_PASS = 'loadmaster.rms.pass.v1';
+let rmsJobs = [], rmsJob = null, rmsRows = [];
+function norm(s) { return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+function rmsMsg(el, msg) { $(el).innerHTML = `<div class="empty">${esc(msg)}</div>`; }
+async function rmsFetch(path, params) {
+  const qs = new URLSearchParams(params || {}); qs.set('path', path);
+  let r;
+  try { r = await fetch('/api/rms?' + qs.toString(), { headers: { 'x-passcode': $('rms-pass').value.trim() } }); }
+  catch (e) { throw new Error("Can't reach the Current RMS connection. This only works on the deployed site."); }
+  let body = null; try { body = await r.json(); } catch (e) {}
+  if (!r.ok) {
+    if (r.status === 401) throw new Error('Wrong passcode');
+    throw new Error((body && body.error) || `Current RMS request failed (${r.status})`);
+  }
+  return body || {};
+}
+function fmtDate(v) { const d = new Date(v); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); }
+async function rmsSearch() {
+  lsSet(LS_RMS_PASS, $('rms-pass').value);
+  const term = $('rms-q').value.trim();
+  rmsMsg('rms-jobs', 'Searching…'); $('rms-items').innerHTML = '';
+  try {
+    let jobs;
+    if (/^\d+$/.test(term)) {
+      const d = await rmsFetch('/opportunities/' + term);
+      jobs = d.opportunity ? [d.opportunity] : [];
+    } else {
+      const p = { per_page: 25 };
+      if (term) p['q[subject_cont]'] = term;
+      let d;
+      try { d = await rmsFetch('/opportunities', { ...p, 'q[s]': 'starts_at desc' }); }
+      catch (e) { if (e.message === 'Wrong passcode') throw e; d = await rmsFetch('/opportunities', p); }
+      jobs = d.opportunities || [];
+    }
+    rmsJobs = jobs; renderRmsJobs();
+  } catch (e) { rmsMsg('rms-jobs', e.message); }
+}
+function renderRmsJobs() {
+  if (!rmsJobs.length) { rmsMsg('rms-jobs', 'No jobs found.'); return; }
+  $('rms-jobs').innerHTML = '<div class="cat-head">Jobs</div>' + rmsJobs.map(j => {
+    const when = [fmtDate(j.starts_at), fmtDate(j.ends_at)].filter(Boolean).join(' – ');
+    const meta = ['#' + j.id, j.status_name || j.state_name, when].filter(Boolean).join(' · ');
+    return `<div class="rms-job"><div class="info"><div class="nm" style="font-size:0.82rem;font-weight:500">${esc(j.subject || 'Untitled job')}</div><div class="dm" style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);margin-top:2px">${esc(meta)}</div></div>
+      <button class="btn" style="padding:6px 10px;font-size:0.8rem" onclick="rmsLoadJob(${Number(j.id)})">Load kit list</button></div>`;
+  }).join('');
+}
+function findCaseFor(name) {
+  const n = norm(name);
+  return library.find(c => norm(c.name) === n || (c.rms || []).some(a => norm(a) === n)) || null;
+}
+async function rmsLoadJob(id) {
+  rmsMsg('rms-items', 'Reading the kit list…');
+  try {
+    const all = []; let page = 1;
+    while (page <= 60) {
+      const d = await rmsFetch('/opportunities/' + id + '/opportunity_items', { per_page: 25, page });
+      const batch = d.opportunity_items || [];
+      all.push(...batch);
+      const total = d.meta && d.meta.total_row_count;
+      if (!batch.length || batch.length < 25 || (total != null && all.length >= total)) break;
+      page++;
+    }
+    rmsJob = rmsJobs.find(j => String(j.id) === String(id)) || { id };
+    const map = new Map();
+    all.forEach(it => {
+      const qty = parseFloat(it.quantity);
+      const isGroup = it.opportunity_item_type === 0 || norm(it.opportunity_item_type_name) === 'group';
+      if (isGroup || !(qty > 0) || !it.name) return;
+      const key = norm(it.name);
+      if (!map.has(key)) map.set(key, { name: it.name, qty: 0 });
+      map.get(key).qty += qty;
+    });
+    rmsRows = [...map.values()].map(r => { const c = findCaseFor(r.name); return { name: r.name, qty: Math.round(r.qty), caseId: c ? c.id : '', on: !!c }; });
+    renderRmsItems();
+  } catch (e) { rmsMsg('rms-items', e.message); }
+}
+function renderRmsItems() {
+  const title = (rmsJob && rmsJob.subject) || ('Job #' + (rmsJob && rmsJob.id));
+  const matched = rmsRows.map((r, i) => ({ r, i })).filter(x => x.r.caseId);
+  const rest = rmsRows.map((r, i) => ({ r, i })).filter(x => !x.r.caseId).sort((a, b) => a.r.name.localeCompare(b.r.name));
+  const opts = '<option value="">Link to a case…</option>' + library.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  let html = `<div class="cat-head">${esc(title)} · ${rmsRows.length} item lines</div>`;
+  if (!rmsRows.length) { $('rms-items').innerHTML = html + '<div class="empty">This job has no items on its kit list yet.</div>'; return; }
+  html += matched.length
+    ? matched.map(({ r, i }) => {
+        const c = library.find(x => x.id === r.caseId);
+        return `<div class="rms-row"><input type="checkbox" ${r.on ? 'checked' : ''} onchange="rmsRows[${i}].on=this.checked">
+          <div class="info"><div class="nm" style="font-size:0.8rem;font-weight:500">${esc(r.name)}</div><div class="dm" style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--muted)">→ ${esc(c ? c.name : '')}</div></div>
+          <input type="number" class="qty-in" min="0" max="99" value="${r.qty}" onchange="rmsRows[${i}].qty=Math.max(0,Math.round(+this.value||0))"></div>`;
+      }).join('') + '<div style="margin:10px 0 4px"><button class="btn green" onclick="rmsAddSelected()">ADD SELECTED TO LOAD LIST</button></div>'
+    : '<div class="empty">None of this job\'s items match a case in your library yet. Link them below, once, and they are remembered.</div>';
+  const shown = rest.slice(0, 300);
+  html += `<details class="rms-more" ${matched.length ? '' : 'open'}><summary>Not in your library · ${rest.length}</summary>` + shown.map(({ r, i }) =>
+    `<div class="rms-row"><div class="info"><div class="nm" style="font-size:0.78rem">${esc(r.name)}</div></div>
+      <span style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted)">× ${r.qty}</span>
+      <select onchange="rmsLink(${i}, this.value)">${opts}</select></div>`).join('') +
+    (rest.length > shown.length ? `<div class="empty">Showing the first ${shown.length} of ${rest.length}.</div>` : '') + '</details>';
+  $('rms-items').innerHTML = html;
+}
+function rmsLink(i, caseId) {
+  if (!caseId || !guard('lib')) return;
+  const c = library.find(x => x.id === caseId); if (!c) return;
+  const name = rmsRows[i].name;
+  c.rms = Array.from(new Set([...(c.rms || []), name]));
+  saveLibrary(); renderLibrary();
+  rmsRows.forEach(r => { if (norm(r.name) === norm(name)) { r.caseId = c.id; r.on = true; } });
+  renderRmsItems();
+  toast(`Linked "${name}" to ${c.name}`, true);
+}
+function rmsAddSelected() {
+  let n = 0;
+  rmsRows.forEach(r => {
+    if (!r.on || !r.caseId || !(r.qty > 0)) return;
+    const c = library.find(x => x.id === r.caseId); if (!c) return;
+    for (let k = 0; k < Math.min(r.qty, 99); k++) {
+      loadList.push({ uid: ++uidCounter, caseId: c.id, name: c.name, color: c.color, l: c.l, w: c.w, h: c.h, kg: c.kg || 0, stack: c.stack, placed: false, x: 0, y: 0, z: 0 });
+      n++;
+    }
+    r.on = false;
+  });
+  if (!n) return toast('Tick at least one case to add');
+  toast(`Added ${n} case${n === 1 ? '' : 's'} from ${(rmsJob && rmsJob.subject) || 'the job'}`, true);
+  showTab('load'); refresh(); renderRmsItems();
+}
+(function restoreRmsPass() { const p = lsGet(LS_RMS_PASS); if (typeof p === 'string') document.getElementById('rms-pass').value = p; })();
+
+// ═══════════════════ INIT ═══════════════════
+(async function init() {
+  const plan = lsGet(LS_PLAN);
+  if (plan && plan.truck) {
+    truck = Object.assign(truck, plan.truck);
+    if (!plan.truck.sel) truck.sel = (plan.truck.preset && plan.truck.preset !== 'custom') ? 'preset:' + plan.truck.preset : 'custom';
+    loadList = Array.isArray(plan.loadList) ? plan.loadList : [];
+    uidCounter = plan.uidCounter || loadList.reduce((m, i) => Math.max(m, i.uid), 0);
+  }
+  initPresets(); syncTruckInputs(); settle();
+  renderLibrary(); renderFleet(); renderLoadList(); render();
+  if (loadList.length) showTab('load');
+
+  try { db = (window.claude && window.claude.use) ? await window.claude.use('db') : null; } catch (e) { db = null; }
+  if (db) {
+    setStatus('Loading saved data…', false);
+    subscribeData();
+  } else {
+    // No shared database here: keep the library and fleet in this browser instead.
+    libLoaded = fleetLoaded = true;
+    const lib = lsGet(LS_LIB);
+    library = Array.isArray(lib) && lib.length ? lib : SEED_LIBRARY.map(c => ({ ...c }));
+    if (!Array.isArray(lib) || !lib.length) saveLibrary();
+    const fl = lsGet(LS_FLEET);
+    fleet = Array.isArray(fl) && fl.length ? fl : SEED_FLEET.map(t => ({ ...t }));
+    if (!Array.isArray(fl) || !fl.length) saveFleet();
+    setStatus('Saved in this browser · use Export library to back up', false);
+    buildTruckSelect(); syncTruckInputs(); renderLibrary(); renderFleet();
+  }
+})();
+</script>
+</body>
+</html>
